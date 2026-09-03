@@ -1,0 +1,145 @@
+---
+title: "5030 Project Report"
+author: "Jiazhen Chow"
+date: "2025-12-06"
+output: html_document
+---
+
+```{r}
+#Load dataset
+data <- read.csv("winequality-white.csv", sep = ";")
+
+#Get some basic information
+dim(data)
+
+names(data)
+
+str(data)
+
+summary(data)
+
+```
+```{r}
+#Check if there is missing value
+anyNA(data)
+```
+
+```{r}
+#Check if all variables are numeric
+numeric_vars <- sapply(data, is.numeric)
+numeric_vars
+
+#Correlation matrix
+cor_mat <- cor(data[, numeric_vars])
+round(cor_mat, 2)
+```
+
+```{r}
+# Make sure all variable are numeric
+numeric_vars <- sapply(data, is.numeric)
+
+cor_mat <- cor(data[, numeric_vars])
+
+# Correlation between quality and other variables
+cor_with_quality <- cor_mat["quality", ]
+
+# Sort by absolute value
+sort(abs(cor_with_quality), decreasing = TRUE)
+
+```
+```{r}
+#Data Analysis
+
+## Full model：
+full_mod <- lm(quality ~ ., data = data)
+
+summary(full_mod)     
+AIC(full_mod)         
+
+## AIC-based reduced model（stepwise）
+reduced_mod <- step(full_mod,
+                    direction = "both",
+                    trace = FALSE)
+
+summary(reduced_mod)
+AIC(reduced_mod)
+
+## Comparison
+model_comp <- data.frame(
+  Model    = c("Full", "AIC-reduced"),
+  AIC      = c(AIC(full_mod),
+               AIC(reduced_mod)),
+  Adj_R2   = c(summary(full_mod)$adj.r.squared,
+               summary(reduced_mod)$adj.r.squared)
+)
+
+model_comp
+
+```
+
+```{r}
+## Residuals vs Fitted 
+res <- resid(reduced_mod)
+fit <- fitted(reduced_mod)
+
+plot(fit, res,
+     xlab = "Fitted values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, lty = 2)
+
+## QQ plot 
+res <- resid(reduced_mod)
+
+qqnorm(res, main = "Normal QQ Plot")
+qqline(res, lty = 2)
+
+```
+
+```{r}
+##Normal CI
+key_coef <- c("volatile.acidity", "alcohol", "density")
+
+norm_ci_all <- confint(reduced_mod, level = 0.95)
+norm_ci_key <- norm_ci_all[key_coef, ]  
+
+norm_ci_key
+```
+
+```{r}
+##Bootstrap for main model
+set.seed(77)
+B <- 1000
+
+n <- nrow(data)
+
+boot_coef <- matrix(NA, nrow = B, ncol = length(key_coef))
+colnames(boot_coef) <- key_coef
+
+for (b in 1:B) {
+  idx    <- sample(1:n, size = n, replace = TRUE)
+  data_b <- data[idx, ]
+  
+  fit_b <- lm(formula(reduced_mod), data = data_b)
+  
+  boot_coef[b, ] <- coef(fit_b)[key_coef]
+}
+
+head(boot_coef)
+```
+
+```{r}
+##Bootstrap 95% CI with key coefficients
+boot_ci <- matrix(NA, nrow = length(key_coef), ncol = 2)
+rownames(boot_ci) <- key_coef
+colnames(boot_ci) <- c("Boot_Lower", "Boot_Upper")
+
+for (j in 1:length(key_coef)) {
+  coef_name <- key_coef[j]
+  boot_ci[j, 1] <- quantile(boot_coef[, j], probs = 0.025)
+  boot_ci[j, 2] <- quantile(boot_coef[, j], probs = 0.975)
+}
+
+boot_ci
+```
+
