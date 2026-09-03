@@ -140,9 +140,13 @@ Regression assumptions were evaluated using:
 - Residuals vs. Fitted plot
 - Normal Q-Q plot
 
+![Residuals vs Fitted](figures/residuals_vs_fitted.png)
+
 The residual plot did not show a strong nonlinear pattern or a major change in residual variance.
 
 The diagonal bands visible in the residual plot are expected because wine quality is recorded as discrete integer scores.
+
+![Normal Q-Q Plot](figures/qq_plot.png)
 
 The Q-Q plot showed that most residuals followed the theoretical normal line, with some deviations in the tails.
 
@@ -192,18 +196,3 @@ Future work could explore nonlinear relationships and interactions using methods
 - Bootstrap Inference
 - Statistical Interpretation
 
----
-
-## Repository Structure
-
-```text
-.
-├── README.md
-├── 5030_Project.Rmd
-├── 5030_Project.html
-├── 5030_Project_Report.pdf
-├── data/
-│   └── winequality-white.csv
-└── figures/
-    ├── residuals_vs_fitted.png
-    └── qq_plot.png
